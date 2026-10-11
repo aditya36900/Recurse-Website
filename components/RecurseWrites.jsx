@@ -93,10 +93,40 @@ export default function RecurseWrites() {
                 <i>SUBSTACK</i>
               </span>
             </div>
+
+            <div className="writes-hero__actions">
+              <a className="button button--solid" href="#articles">
+                Explore articles <span>↓</span>
+              </a>
+              <a className="button button--ghost" href="#subscribe">
+                Never miss an edition <span>↗</span>
+              </a>
+            </div>
+          </div>
+
+          <div className="writes-hero__meta">
+            <div>
+              <span>CADENCE</span>
+              <b>WEEKLY / EVERY TUESDAY</b>
+            </div>
+            <div>
+              <span>CHANNELS</span>
+              <b>MEDIUM + SUBSTACK</b>
+            </div>
+            <a href="#articles" className="writes-hero__scroll" aria-label="Scroll to articles">
+              <span>SCROLL</span>
+              <b className="scroll-glyph">↓</b>
+            </a>
+          </div>
+
+          <div className="hero-ticker" aria-hidden="true">
+            <div className="hero-ticker__track">
+              <span>WEEKLY ESSAYS</span><i>+</i><span>OPEN SOURCE</span><i>+</i><span>DEEP DIVES</span><i>+</i><span>TECH CULTURE</span><i>+</i><span>WEEKLY ESSAYS</span><i>+</i><span>OPEN SOURCE</span><i>+</i><span>DEEP DIVES</span><i>+</i><span>TECH CULTURE</span><i>+</i>
+            </div>
           </div>
         </section>
 
-        <section className="writes-list-section">
+        <section className="writes-list-section" id="articles">
           <div className="section-label reveal">
             <span>01</span>
             <p>All articles</p>
@@ -169,7 +199,7 @@ export default function RecurseWrites() {
           </div>
         </section>
 
-        <section className="writes-cta">
+        <section className="writes-cta" id="subscribe">
           <div className="writes-cta__rings" aria-hidden="true">
             <i></i><i></i><i></i>
           </div>

@@ -9,7 +9,7 @@ export const articles = [
 			"https://medium.com/@recursekmit/what-if-science-fiction-was-open-source-75b2321641ff",
 		substackUrl:
 			"https://recursekmit.substack.com/p/what-if-science-fiction-was-open",
-		date: "2026-10-06",
+		date: "2026-10-11",
 		author: "Shoaib Sadiq",
 	},
 	{
@@ -22,7 +22,7 @@ export const articles = [
 			"https://medium.com/@recursekmit/you-may-have-seen-people-saying-things-like-this-recently-5f8f2986cb47",
 		substackUrl:
 			"https://recursekmit.substack.com/p/are-llms-dead-because-of-jev",
-		date: "2026-09-29",
+		date: "2026-10-4",
 		author: "Akhil Tangudu",
 	},
 ];

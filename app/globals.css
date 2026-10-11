@@ -2621,11 +2621,11 @@ a {
 
 .writes-hero {
   position: relative;
-  min-height: 72svh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 10rem var(--pad) clamp(4rem, 7vw, 7rem);
+  justify-content: center;
+  padding: clamp(7rem, 12vh, 10rem) var(--pad) clamp(8rem, 14vh, 11rem);
   isolation: isolate;
   overflow: hidden;
 }
@@ -2667,7 +2667,7 @@ a {
 }
 
 .writes-hero__content {
-  max-width: 50rem;
+  max-width: 52rem;
 }
 
 .writes-hero h1 {
@@ -2719,6 +2719,58 @@ a {
   font: 400 0.58rem var(--mono);
   font-style: normal;
   letter-spacing: 0.08em;
+}
+
+.writes-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2.2rem;
+}
+
+.writes-hero__meta {
+  position: absolute;
+  right: var(--pad);
+  bottom: 4.8rem;
+  left: var(--pad);
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--line);
+}
+
+.writes-hero__meta > div {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.writes-hero__meta span {
+  color: var(--grey);
+  font: 0.57rem var(--mono);
+  letter-spacing: 0.08em;
+}
+
+.writes-hero__meta b {
+  font: 400 0.63rem var(--mono);
+  letter-spacing: 0.05em;
+}
+
+.writes-hero__scroll {
+  display: grid;
+  gap: 0.3rem;
+  text-align: right;
+  cursor: pointer;
+  color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.writes-hero__scroll:hover {
+  opacity: 0.85;
+}
+
+.writes-hero__scroll b {
+  display: inline-block;
 }
 
 /* ── Article List ── */
@@ -3171,8 +3223,10 @@ a {
 
 @media (max-width: 680px) {
   .writes-hero {
-    min-height: 52svh;
-    padding-top: 9rem;
+    min-height: 100svh;
+    justify-content: flex-start;
+    padding-top: 8.5rem;
+    padding-bottom: 7.5rem;
   }
 
   .writes-hero__eyebrow {
@@ -3187,6 +3241,29 @@ a {
 
   .writes-hero__meta-row {
     flex-wrap: wrap;
+  }
+
+  .writes-hero__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .writes-hero__actions .button {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .writes-hero__meta {
+    bottom: 3.8rem;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .writes-hero__meta > div:nth-child(2) {
+    text-align: right;
+  }
+
+  .writes-hero__meta > .writes-hero__scroll {
+    display: none;
   }
 
   .writes-card {
