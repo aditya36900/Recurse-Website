@@ -1,7 +1,7 @@
 import { siteConfig } from "@/lib/site";
 
 export default function sitemap() {
-  const lastModified = new Date("2026-08-05T00:00:00+05:30");
+  const lastModified = new Date("2026-10-11T00:00:00+05:30");
 
   return [
     {
@@ -15,6 +15,12 @@ export default function sitemap() {
       lastModified,
       changeFrequency: "daily",
       priority: 0.9,
+    },
+    {
+      url: `${siteConfig.url}/recursewrites`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.8,
     },
     {
       url: `${siteConfig.url}/team`,

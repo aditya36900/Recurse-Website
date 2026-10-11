@@ -47,7 +47,7 @@ export default function ClubSite() {
         <a href="#about">About</a>
         <a href="#events">Events</a>
         <a href="/opportunities">Opportunities</a>
-        <a href="#impact">Impact</a>
+        <a href="/recursewrites">Writes</a>
         <a href="#gallery">Gallery</a>
         <a href="/team">Team</a>
       </nav>
@@ -68,7 +68,7 @@ export default function ClubSite() {
         <a href="#about">01 / About</a>
         <a href="#events">02 / Events</a>
         <a href="/opportunities">03 / Opportunities</a>
-        <a href="#impact">04 / Impact</a>
+        <a href="/recursewrites">04 / Writes</a>
         <a href="#gallery">05 / Gallery</a>
         <a href="/team">06 / Team</a>
         <a href="#join">07 / Join</a>
@@ -886,7 +886,7 @@ export default function ClubSite() {
           <a href="#about">About</a>
           <a href="#events">Events</a>
           <a href="/opportunities">Opportunities</a>
-          <a href="#impact">Impact</a>
+          <a href="/recursewrites">Writes</a>
           <a href="#gallery">Gallery</a>
           <a href="/team">Team</a>
         </div>

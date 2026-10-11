@@ -360,6 +360,7 @@ export default function OpportunityBoard({ initialListings, reviewEmail }) {
           <a href="/#about">About</a>
           <a href="/#events">Events</a>
           <a href="/opportunities" aria-current="page">Opportunities</a>
+          <a href="/recursewrites">Writes</a>
           <a href="/#impact">Impact</a>
           <a href="/team">Team</a>
         </nav>
@@ -386,10 +387,11 @@ export default function OpportunityBoard({ initialListings, reviewEmail }) {
           <a href="/#about">01 / About</a>
           <a href="/#events">02 / Events</a>
           <a href="/opportunities">03 / Opportunities</a>
-          <a href="/#impact">04 / Impact</a>
-          <a href="/team">05 / Team</a>
+          <a href="/recursewrites">04 / Writes</a>
+          <a href="/#impact">05 / Impact</a>
+          <a href="/team">06 / Team</a>
           <button type="button" onClick={() => setShowSubmit(true)}>
-            06 / Post an opening
+            07 / Post an opening
           </button>
         </nav>
       </header>
@@ -628,7 +630,7 @@ export default function OpportunityBoard({ initialListings, reviewEmail }) {
           <div>
             <span>NAVIGATE</span>
             <a href="/#about">About</a><a href="/#events">Events</a>
-            <a href="/opportunities">Opportunities</a><a href="/team">Team</a>
+            <a href="/opportunities">Opportunities</a><a href="/recursewrites">Writes</a><a href="/team">Team</a>
           </div>
           <div>
             <span>CONNECT</span>
