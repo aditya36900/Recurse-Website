@@ -1,5 +1,17 @@
 export const articles = [
 	{
+		week: 3,
+		title: "Context Windows Are Getting Bigger. Are Models Getting Better?",
+		description:
+			"A bigger context window measures how much a model can hold, not how well it reasons over it. A look at the tokenization, attention, and memory costs behind long contexts, and why models still miss what sits in the middle.",
+		thumbnail: "/images/writes/edition-03.png",
+		mediumUrl: "https://medium.com/@recursekmit/ef6fef976bf6",
+		substackUrl:
+			"https://recursekmit.substack.com/p/context-windows-are-getting-bigger",
+		date: "2026-10-18",
+		author: "Tarang Harsola",
+	},
+	{
 		week: 2,
 		title: "What If Science Fiction Was Open Source?",
 		description:

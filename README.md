@@ -35,6 +35,31 @@ and structured data use this value.
   `NEXT_PUBLIC_OPPORTUNITY_SUBMIT_URL` to an endpoint that accepts JSON POST
   requests. The email workflow remains the fallback.
 
+## Recurse Writes
+
+The weekly newsletter archive lives at `/recursewrites`. To publish a new edition:
+
+1. Save the cover image as `public/images/writes/edition-NN.png` (16:9, e.g.
+   1672×941). The Substack post's `og:image` works: open the post, view source,
+   search for `og:image`, and download that URL.
+2. Add an entry to the **top** of the `articles` array in
+   `components/articleData.js` (newest first):
+
+   ```js
+   {
+   	week: 3,                       // edition number, shown as "EDITION 03"
+   	title: "Post title",
+   	description: "One or two sentence summary.",
+   	thumbnail: "/images/writes/edition-03.png",
+   	mediumUrl: "https://medium.com/@recursekmit/...",
+   	substackUrl: "https://recursekmit.substack.com/p/...",
+   	date: "2026-10-18",            // YYYY-MM-DD
+   	author: "Author Name",
+   },
+   ```
+
+3. Run `npm run dev` and check `/recursewrites`. The edition count updates on its own.
+
 ## Before launch
 
 - Replace the gallery placeholders with optimized event photos.
