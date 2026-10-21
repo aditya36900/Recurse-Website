@@ -209,7 +209,7 @@ export default function TeamSite() {
           <h2 className="reveal">BUILD WITH<br />THE TEAM.</h2>
           <div className="team-cta__actions reveal">
             <a className="button button--dark" href="/#join">Join Recurse <span>↗</span></a>
-            <a className="button button--line" href="mailto:recurse@kmit.in">Contact us</a>
+            <a className="button button--line" href="mailto:recursekmit@gmail.com">Contact us</a>
           </div>
         </section>
       </main>
@@ -247,7 +247,7 @@ export default function TeamSite() {
             >
               Instagram ↗
             </a>
-            <a href="mailto:recurse@kmit.in">Email ↗</a>
+            <a href="mailto:recursekmit@gmail.com">Email ↗</a>
           </div>
         </div>
         <div className="footer__bottom">
