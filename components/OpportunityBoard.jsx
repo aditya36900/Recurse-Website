@@ -635,7 +635,7 @@ export default function OpportunityBoard({ initialListings, reviewEmail }) {
           <div>
             <span>CONNECT</span>
             <a href="https://www.instagram.com/recurse.official/" target="_blank" rel="noreferrer">Instagram ↗</a>
-            <a href="mailto:recurse@kmit.in">Email ↗</a>
+            <a href="mailto:recursekmit@gmail.com">Email ↗</a>
           </div>
         </div>
         <div className="footer__bottom">
