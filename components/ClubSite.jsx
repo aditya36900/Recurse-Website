@@ -830,7 +830,7 @@ export default function ClubSite() {
           >
             Follow @recurse.official <span>↗</span>
           </a>
-          <a className="button button--line" href="mailto:recurse@kmit.in">
+          <a className="button button--line" href="mailto:recursekmit@gmail.com">
             Talk to the team
           </a>
           <a className="button button--line" href="/team">
@@ -898,7 +898,7 @@ export default function ClubSite() {
             rel="noreferrer"
             >Instagram ↗</a
           >
-          <a href="mailto:recurse@kmit.in">Email ↗</a>
+          <a href="mailto:recursekmit@gmail.com">Email ↗</a>
         </div>
       </div>
       <div className="footer__bottom">
