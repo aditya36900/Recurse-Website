@@ -7,7 +7,7 @@ const clubHeads = [
   {
     name: "Golla Bharath",
     role: "Club Head",
-    focus: "Recurse Leadership · 2025–26",
+    focus: "Recurse Leadership · 2026–27",
     image: "/images/Bharath.jpeg",
     imageAlt: "Golla Bharath speaking at a Recurse event",
     imagePosition: "center 28%",
@@ -15,7 +15,7 @@ const clubHeads = [
   {
     name: "Kondour Prakarsha",
     role: "Club Head",
-    focus: "Recurse Leadership · 2025–26",
+    focus: "Recurse Leadership · 2026–27",
     image: "/images/Prakarsha.jpeg",
     imageAlt: "Kondour Prakarsha speaking at a Recurse event",
     imagePosition: "center 22%",
