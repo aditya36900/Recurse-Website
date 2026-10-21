@@ -5,7 +5,7 @@ A responsive Next.js website for Recurse, KMIT's technical club.
 ## Development
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -18,11 +18,79 @@ npm run build
 npm start
 ```
 
-The homepage is statically prerendered by the Next.js App Router.
+The entire site is exported to `out/` by the Next.js App Router. `npm start`
+serves that build locally using Cloudflare Workers on port 3000. Use Node.js 22
+or newer for the build and Wrangler CLI.
 
 Set `NEXT_PUBLIC_SITE_URL` to the final production origin if it changes from
 `https://recursekmit.vercel.app`. Canonical URLs, the sitemap, robots metadata,
 and structured data use this value.
+
+## Cloudflare deployment
+
+The same static export supports both Workers Static Assets and Pages. Images
+are served directly from `public/` without Next.js server-side image optimization.
+Metadata (including the Open Graph image) is generated at build time.
+The build compresses exported JPEGs over Cloudflare's 25 MiB asset limit to fit
+within 2560×2560 pixels, preserving originals in `public/`, and rejects any remaining
+oversized assets. Always use `npm run build` so this preparation step runs.
+Interactive features remain client-side; submissions still use the external endpoint or email.
+Adding server actions, request-time SSR, or API routes later requires a different
+deployment setup.
+
+Set these **build environment variables** in Cloudflare before building:
+
+- `NEXT_PUBLIC_SITE_URL`: your final origin, e.g. `https://recurse.example.com`.
+- `NEXT_PUBLIC_OPPORTUNITY_SUBMIT_URL`: optional external JSON submission endpoint;
+  it must allow browser requests from your site's origin.
+- `NODE_VERSION`: `22` (for Cloudflare Git builds).
+
+For local builds, copy `.env.example` to `.env.local` and fill in your values.
+Public environment variables are embedded in the build; changing them requires
+a rebuild and deployment.
+
+### Workers
+
+For Git integration, use build command `npm run build` and deploy command
+`npx wrangler deploy`. The root `wrangler.jsonc` serves `out/`, resolves clean page
+URLs, and returns the exported 404 page for missing routes. Match its `name` to
+your Cloudflare Worker name if you choose a different name.
+
+For a manual deployment:
+
+```bash
+npx wrangler login
+npm run deploy:workers
+```
+
+Preview locally with `npm run preview:workers`.
+
+### Pages
+
+For Git integration, select **Next.js (Static HTML Export)**, use build command
+`npm run build`, and set the build output directory to `out`. The root directory
+is this repository. Pages dashboard settings control Git deployments. The Pages
+CLI scripts pass `out` explicitly and ignore the Workers-only `wrangler.jsonc`
+(Wrangler may print a warning about the missing `pages_build_output_dir`; this is
+expected because that file configures Workers).
+
+For a manual deployment, create the Pages project once (or use an existing project
+and update `--project-name` in the `deploy:pages` package script):
+
+```bash
+npx wrangler login
+npx wrangler pages project create recurse-website
+npm run deploy:pages
+```
+
+Preview locally with `npm run preview:pages`. Choose Git integration when creating
+the Pages project if you want automatic Git deployments; Cloudflare does not allow
+switching a Direct Upload project to Git integration later.
+
+Official documentation: [Next.js static exports on Pages](https://developers.cloudflare.com/pages/framework-guides/nextjs/deploy-a-static-nextjs-site/),
+[Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/),
+[Pages Wrangler configuration](https://developers.cloudflare.com/pages/functions/wrangler-configuration/),
+and [Pages Direct Upload](https://developers.cloudflare.com/pages/get-started/direct-upload/).
 
 ## Opportunity board
 

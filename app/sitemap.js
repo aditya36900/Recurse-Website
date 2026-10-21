@@ -1,5 +1,7 @@
 import { siteConfig } from "@/lib/site";
 
+export const dynamic = "force-static";
+
 export default function sitemap() {
   const lastModified = new Date("2026-10-11T00:00:00+05:30");
 
