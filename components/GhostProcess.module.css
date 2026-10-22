@@ -1030,8 +1030,16 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* Stack the objective above the terminal and let the terminal take the remaining height. */
   .workspace {
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .workspace .window {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 20rem;
   }
 
   .caseFile {
@@ -1096,9 +1104,8 @@
     padding: 0.75rem 0.75rem 1rem;
   }
 
-  .window,
   .os {
-    height: calc(100dvh - 15rem);
+    height: calc(100dvh - 10.5rem);
     min-height: 22rem;
   }
 
