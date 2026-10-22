@@ -128,6 +128,48 @@ The weekly newsletter archive lives at `/recursewrites`. To publish a new editio
 
 3. Run `npm run dev` and check `/recursewrites`. The edition count updates on its own.
 
+## Ghost Process
+
+The puzzle at `/ghost-process` asks for a KMIT roll number first. Each roll number
+gets its own restoration key (`ORBIT-XXXX-XXXX`), derived on the server as an HMAC
+of the roll number, so a key only works for the roll number it was issued to.
+When someone restores the system, the server posts their roll number, key and
+completion code to Telegram.
+
+The API lives in `app/api/ghost/*/route.server.js` with helpers in
+`lib/ghostServer.js`. These routes are built only on Vercel (where `VERCEL` is set)
+and in `npm run dev`. The Cloudflare static export leaves them out, so the puzzle
+needs the Vercel deployment.
+
+Set these in **Vercel → Settings → Environment Variables** (server-only, no
+`NEXT_PUBLIC_` prefix), then redeploy:
+
+- `GHOST_SECRET`: a long random string, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+  Keep it fixed for the whole event. Changing it changes every key.
+- `TELEGRAM_BOT_TOKEN`: in Telegram, message [@BotFather](https://t.me/BotFather),
+  send `/newbot`, and copy the token it returns.
+- `TELEGRAM_CHAT_ID`: send your bot any message (or add it to a group and post there),
+  then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy `message.chat.id`.
+  Group IDs are negative.
+
+### Stored keys and solves
+
+Connect **Vercel → Storage → Upstash for Redis** (Marketplace) to the project. It adds
+`KV_REST_API_URL` and `KV_REST_API_TOKEN`, which the routes use to record:
+
+- `ghost:player:<ROLL>`: roll number, key, completion code, `startedAt`, `solvedAt`, `failedAttempts`
+- `ghost:solved`: solve order (Telegram announces only a roll number's first solve, as "Solver #N")
+
+Browse it in the Upstash console, or export a CSV:
+
+```bash
+vercel env pull .env.local
+node --env-file=.env.local scripts/ghost-export.mjs > ghost-players.csv
+```
+
+In development, a built-in secret is used, and storage and Telegram are skipped
+(alerts are printed to the console) when their variables are missing.
+
 ## Before launch
 
 - Replace the gallery placeholders with optimized event photos.
