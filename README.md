@@ -128,6 +128,61 @@ The weekly newsletter archive lives at `/recursewrites`. To publish a new editio
 
 3. Run `npm run dev` and check `/recursewrites`. The edition count updates on its own.
 
+## Ghost Process
+
+The puzzle at `/ghost-process` runs on a Cloudflare Worker (`worker/ghost.js`). The page only
+sends terminal input and renders the reply, so the solution path and a player's key never ship in
+the site's JavaScript. Each player's progress is stored in D1, and a step can't be skipped.
+
+- Players enter their KMIT roll number. Each gets their own `ORBIT-XXXX-XXXX` key, derived as an
+  HMAC of the roll number, so a key only works for its own roll number.
+- The first time a roll number solves the puzzle, a Telegram bot posts its roll number, key,
+  completion code, time and solve order ("Solver #N").
+- `worker/index.js` is the Workers entry; `functions/api/ghost/[[path]].js` is the Pages entry.
+
+### One-time Cloudflare setup
+
+1. Create the database, then paste the printed `database_id` into `wrangler.jsonc`:
+
+   ```bash
+   npx wrangler d1 create recurse-ghost
+   ```
+
+   The table is created automatically on the first request.
+2. Add the secrets (Workers: **Settings → Variables and Secrets**, or the commands below; Pages:
+   **Settings → Variables and Secrets**, and bind the D1 database as `GHOST_DB` under **Bindings**):
+
+   ```bash
+   npx wrangler secret put GHOST_SECRET        # long random string; never change it mid-event
+   npx wrangler secret put TELEGRAM_BOT_TOKEN  # from @BotFather → /newbot
+   npx wrangler secret put TELEGRAM_CHAT_ID    # message the bot, then read chat.id from getUpdates
+   ```
+
+   Generate `GHOST_SECRET` with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+   For the chat ID, message the bot, open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy
+   `message.chat.id` (group IDs are negative).
+3. Deploy as usual (`npm run deploy:workers` or the Git integration).
+
+### Local development
+
+Copy `.dev.vars.example` to `.dev.vars` and fill it in. Then either:
+
+- `npm run build && npm start` runs the whole site and the Worker on `http://localhost:3000`, or
+- run `npm run dev:api` (Worker on port 8787; needs one `npm run build` first) beside `npm run dev`
+  for hot reload. `next dev` forwards `/api/*` to the Worker.
+
+Local runs use a local D1 database in `.wrangler/`.
+
+### Exporting players
+
+```bash
+npm run ghost:export > ghost-players.csv            # live database
+npm run ghost:export -- --local > ghost-players.csv # local database
+```
+
+The CSV lists solvers first, in solve order, with each player's key, code, stage, times and failed
+attempts.
+
 ## Before launch
 
 - Replace the gallery placeholders with optimized event photos.
@@ -150,3 +205,6 @@ The weekly newsletter archive lives at `/recursewrites`. To publish a new editio
 - `components/timelineEvents.js` — event history
 - `components/useSiteInteractions.js` — navigation, reveals, filters, counters, canvas network, and terminal behavior
 - `public/icon.svg` — site icon
+- `components/GhostProcess.jsx` — Ghost Process terminal UI (no puzzle logic)
+- `worker/ghost.js` — Ghost Process API: puzzle, keys, D1 progress, Telegram alerts
+- `worker/index.js`, `functions/api/ghost/[[path]].js` — Workers and Pages entries for that API
