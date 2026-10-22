@@ -168,16 +168,11 @@ export default function GhostProcess() {
     setAuthBusy(true);
     setAuthError("");
     try {
-      const saved = loadSaved();
-      let next = saved.roll === value && saved.payload ? saved.payload : "";
-      if (!next) {
-        const { ok, data } = await post("/api/ghost/start", { roll: value });
-        if (!ok || !data.payload) throw new Error(data.error || "Could not open a session. Try again.");
-        next = data.payload;
-      }
-      save({ roll: value, payload: next });
+      const { ok, data } = await post("/api/ghost/start", { roll: value });
+      if (!ok || !data.payload) throw new Error(data.error || "Could not open a session. Try again.");
+      save({ roll: value, payload: data.payload });
       setRoll(value);
-      setPayload(next);
+      setPayload(data.payload);
       advance(1);
       setView("terminal");
     } catch (error) {
