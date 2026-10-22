@@ -30,6 +30,4 @@ async function prepare(directory) {
   }
 }
 
-// Vercel builds run a Next.js server instead of a static export, so there is no out/.
-if (process.env.VERCEL) console.log("Vercel build: skipping Cloudflare asset preparation.");
-else await prepare("out");
+await prepare("out");

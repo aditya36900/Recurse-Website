@@ -130,45 +130,58 @@ The weekly newsletter archive lives at `/recursewrites`. To publish a new editio
 
 ## Ghost Process
 
-The puzzle at `/ghost-process` asks for a KMIT roll number first. Each roll number
-gets its own restoration key (`ORBIT-XXXX-XXXX`), derived on the server as an HMAC
-of the roll number, so a key only works for the roll number it was issued to.
-When someone restores the system, the server posts their roll number, key and
-completion code to Telegram.
+The puzzle at `/ghost-process` runs on a Cloudflare Worker (`worker/ghost.js`). The page only
+sends terminal input and renders the reply, so the solution path and a player's key never ship in
+the site's JavaScript. Each player's progress is stored in D1, and a step can't be skipped.
 
-The API lives in `app/api/ghost/*/route.server.js` with helpers in
-`lib/ghostServer.js`. These routes are built only on Vercel (where `VERCEL` is set)
-and in `npm run dev`. The Cloudflare static export leaves them out, so the puzzle
-needs the Vercel deployment.
+- Players enter their KMIT roll number. Each gets their own `ORBIT-XXXX-XXXX` key, derived as an
+  HMAC of the roll number, so a key only works for its own roll number.
+- The first time a roll number solves the puzzle, a Telegram bot posts its roll number, key,
+  completion code, time and solve order ("Solver #N").
+- `worker/index.js` is the Workers entry; `functions/api/ghost/[[path]].js` is the Pages entry.
 
-Set these in **Vercel → Settings → Environment Variables** (server-only, no
-`NEXT_PUBLIC_` prefix), then redeploy:
+### One-time Cloudflare setup
 
-- `GHOST_SECRET`: a long random string, e.g. `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
-  Keep it fixed for the whole event. Changing it changes every key.
-- `TELEGRAM_BOT_TOKEN`: in Telegram, message [@BotFather](https://t.me/BotFather),
-  send `/newbot`, and copy the token it returns.
-- `TELEGRAM_CHAT_ID`: send your bot any message (or add it to a group and post there),
-  then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy `message.chat.id`.
-  Group IDs are negative.
+1. Create the database, then paste the printed `database_id` into `wrangler.jsonc`:
 
-### Stored keys and solves
+   ```bash
+   npx wrangler d1 create recurse-ghost
+   ```
 
-Connect **Vercel → Storage → Upstash for Redis** (Marketplace) to the project. It adds
-`KV_REST_API_URL` and `KV_REST_API_TOKEN`, which the routes use to record:
+   The table is created automatically on the first request.
+2. Add the secrets (Workers: **Settings → Variables and Secrets**, or the commands below; Pages:
+   **Settings → Variables and Secrets**, and bind the D1 database as `GHOST_DB` under **Bindings**):
 
-- `ghost:player:<ROLL>`: roll number, key, completion code, `startedAt`, `solvedAt`, `failedAttempts`
-- `ghost:solved`: solve order (Telegram announces only a roll number's first solve, as "Solver #N")
+   ```bash
+   npx wrangler secret put GHOST_SECRET        # long random string; never change it mid-event
+   npx wrangler secret put TELEGRAM_BOT_TOKEN  # from @BotFather → /newbot
+   npx wrangler secret put TELEGRAM_CHAT_ID    # message the bot, then read chat.id from getUpdates
+   ```
 
-Browse it in the Upstash console, or export a CSV:
+   Generate `GHOST_SECRET` with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`.
+   For the chat ID, message the bot, open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy
+   `message.chat.id` (group IDs are negative).
+3. Deploy as usual (`npm run deploy:workers` or the Git integration).
+
+### Local development
+
+Copy `.dev.vars.example` to `.dev.vars` and fill it in. Then either:
+
+- `npm run build && npm start` runs the whole site and the Worker on `http://localhost:3000`, or
+- run `npm run dev:api` (Worker on port 8787; needs one `npm run build` first) beside `npm run dev`
+  for hot reload. `next dev` forwards `/api/*` to the Worker.
+
+Local runs use a local D1 database in `.wrangler/`.
+
+### Exporting players
 
 ```bash
-vercel env pull .env.local
-node --env-file=.env.local scripts/ghost-export.mjs > ghost-players.csv
+npm run ghost:export > ghost-players.csv            # live database
+npm run ghost:export -- --local > ghost-players.csv # local database
 ```
 
-In development, a built-in secret is used, and storage and Telegram are skipped
-(alerts are printed to the console) when their variables are missing.
+The CSV lists solvers first, in solve order, with each player's key, code, stage, times and failed
+attempts.
 
 ## Before launch
 
@@ -192,3 +205,6 @@ In development, a built-in secret is used, and storage and Telegram are skipped
 - `components/timelineEvents.js` — event history
 - `components/useSiteInteractions.js` — navigation, reveals, filters, counters, canvas network, and terminal behavior
 - `public/icon.svg` — site icon
+- `components/GhostProcess.jsx` — Ghost Process terminal UI (no puzzle logic)
+- `worker/ghost.js` — Ghost Process API: puzzle, keys, D1 progress, Telegram alerts
+- `worker/index.js`, `functions/api/ghost/[[path]].js` — Workers and Pages entries for that API

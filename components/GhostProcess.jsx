@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { isValidRoll, normalizeRoll } from "@/lib/ghost";
 import s from "./GhostProcess.module.css";
 
+// The puzzle itself runs on the server (worker/ghost.js). This page only sends terminal input and
+// renders the result, so the solution never ships to the browser.
+
 const storageKey = "recurse-ghost-process";
 const instagram = "https://www.instagram.com/recurse.official/";
 
@@ -18,7 +21,7 @@ const objectives = [
   "System restored. Send your completion code to Recurse.",
 ];
 const quickCommands = ["help", "status", "ps", "clear"];
-const knownCommands = ["help", "status", "ps", "cat", "clear", "whoami", "decode", "restore"];
+const knownCommands = ["help", "status", "ps", "cat", "clear"];
 
 const boot = [
   "Help will always be given at Recurse for those who ask it.",
@@ -28,69 +31,17 @@ const boot = [
   "Investigate the terminal. Find what it left behind.",
 ];
 
-const folders = {
-  home: ["README.txt", "activity.log"],
-  Documents: ["system-note.txt"],
-  System: ["integrity.log"],
-  Downloads: ["image-cache.log"],
-  Archives: ["recovery_payload.txt"],
-};
-
-function fileContents(name, payload) {
-  return {
-    "README.txt": "RECURSE OS // USER ENVIRONMENT\nPersonal workspace restored.",
-    "activity.log": "No recent user activity.",
-    "system-note.txt": "A recovery archive was accessed by an unknown process.\nCheck Archives.",
-    "integrity.log": "Integrity monitor offline.",
-    "image-cache.log": "Cache clean.",
-    "recovery_payload.txt": payload,
-  }[name];
-}
-
-function decodeKey(payload) {
+function loadSavedRoll() {
   try {
-    return atob(payload).replace(/^RESTORE:\s*/, "");
+    return JSON.parse(localStorage.getItem(storageKey))?.roll || "";
   } catch {
     return "";
   }
 }
 
-// Returns either plain output text or { action } for commands that change the screen.
-function run(value, { roll, payload }) {
-  const [name = "", ...rest] = value.trim().split(/\s+/);
-  const arg = rest.join(" ");
-  const command = name.toLowerCase();
-
-  if (command === "help")
-    return "AVAILABLE DIAGNOSTIC COMMANDS\n\nhelp       Display this guide\nstatus     Inspect system health\nps         Inspect running processes\ncat        Read a file\nclear      Clear terminal output\n\nSome system functions remain undocumented.\nFollow the evidence to discover them.";
-  if (command === "status")
-    return "SYSTEM STATUS: DEGRADED\nINTEGRITY: UNKNOWN\nACTIVE PROCESSES: 4\nUNIDENTIFIED PROCESS: DETECTED";
-  if (command === "whoami") return `${roll}\nROLE: INVESTIGATOR\nCLEARANCE: GUEST`;
-  if (command === "ps")
-    return "PID     PROCESS     STATUS\n101     systemd     RUNNING\n204     web-core    RUNNING\n318     asset-sync  DEGRADED\n1337    ghostd      UNKNOWN  ◀\n\nTRACE DETECTED: /var/log/.ghost_trace";
-  if (command === "cat" && arg === "/var/log/.ghost_trace")
-    return { action: "trace", text: "GHOST TRACE // LOG 001\n\nSomething is happening inside the user environment.\nTerminal diagnostics cannot reach it.\n\nSYSTEM NOTE: The user environment may need to be opened separately." };
-  if (command === "cat") return arg ? `cat: ${arg}: No such file or directory` : "usage: cat <file>";
-  if (command === "open" && ["os", "user", "environment", "user environment"].includes(arg.toLowerCase()))
-    return { action: "os" };
-  if (value.trim() === payload)
-    return "ENCRYPTED ARCHIVE DETECTED\nThis payload cannot be read directly.\nUse decode followed by the payload to decrypt it.";
-  if (command === "decode") return arg === payload ? { action: "decode" } : "DECODE FAILED\nPAYLOAD NOT RECOGNISED";
-  if (command === "restore") return arg ? { action: "restore", key: arg } : "usage: restore <key>";
-  return `command not found: ${name || value}. Type 'help' for diagnostic commands.`;
-}
-
-function loadSaved() {
+function saveRoll(roll) {
   try {
-    return JSON.parse(localStorage.getItem(storageKey)) || {};
-  } catch {
-    return {};
-  }
-}
-
-function save(data) {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(data));
+    localStorage.setItem(storageKey, JSON.stringify({ roll }));
   } catch {}
 }
 
@@ -101,15 +52,18 @@ async function post(path, body) {
     body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  return { ok: response.ok, data };
+  if (!response.ok) throw new Error(data.error || "Something went wrong. Try again.");
+  return data;
 }
+
+const offline = (error) =>
+  error instanceof TypeError ? "Recurse servers are unreachable. Check your connection." : error.message;
 
 export default function GhostProcess() {
   const [view, setView] = useState("alert");
   const [stage, setStage] = useState(0);
   const [roll, setRoll] = useState("");
   const [rollInput, setRollInput] = useState("");
-  const [payload, setPayload] = useState("");
   const [code, setCode] = useState("");
   const [authError, setAuthError] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
@@ -118,22 +72,22 @@ export default function GhostProcess() {
   const [commands, setCommands] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [busy, setBusy] = useState(false);
+  const [env, setEnv] = useState(null);
   const [folder, setFolder] = useState("home");
   const [file, setFile] = useState(null);
   const [found, setFound] = useState(false);
-  const [modal, setModal] = useState(false);
+  const [key, setKey] = useState("");
   const [copied, setCopied] = useState("");
   const [clock, setClock] = useState("");
   const output = useRef(null);
   const field = useRef(null);
   const stick = useRef(true);
 
-  const key = decodeKey(payload);
-  const advance = (n) => setStage((current) => Math.max(current, n));
+  const payload = env?.contents[env.payloadFile] ?? "";
+  const advance = (n) => n && setStage((current) => Math.max(current, n));
 
   useEffect(() => {
-    const saved = loadSaved();
-    if (saved.roll) setRollInput(saved.roll);
+    setRollInput(loadSavedRoll());
   }, []);
 
   useEffect(() => {
@@ -141,8 +95,8 @@ export default function GhostProcess() {
   }, [log]);
 
   useEffect(() => {
-    if (view === "terminal" && !modal) field.current?.focus({ preventScroll: true });
-  }, [view, modal]);
+    if (view === "terminal" && !key && !busy) field.current?.focus({ preventScroll: true });
+  }, [view, key, busy]);
 
   useEffect(() => {
     if (view !== "restoring") return;
@@ -168,44 +122,24 @@ export default function GhostProcess() {
     setAuthBusy(true);
     setAuthError("");
     try {
-      const { ok, data } = await post("/api/ghost/start", { roll: value });
-      if (!ok || !data.payload) throw new Error(data.error || "Could not open a session. Try again.");
-      save({ roll: value, payload: data.payload });
+      const data = await post("/api/ghost/session", { roll: value });
+      saveRoll(value);
       setRoll(value);
-      setPayload(data.payload);
-      advance(1);
-      setView("terminal");
+      advance(data.stage);
+      if (data.code) {
+        setCode(data.code);
+        setView("success");
+      } else {
+        setView("terminal");
+      }
     } catch (error) {
-      setAuthError(
-        error instanceof TypeError ? "Recurse servers are unreachable. Check your connection." : error.message,
-      );
+      setAuthError(offline(error));
     } finally {
       setAuthBusy(false);
     }
   };
 
-  const restore = async (attempt, id) => {
-    setBusy(true);
-    let result;
-    try {
-      const { ok, data } = await post("/api/ghost/restore", { roll, key: attempt });
-      result = ok && data.code ? { code: data.code } : { text: `RECOVERY FAILED\n${data.error || "INVALID RESTORATION KEY"}` };
-    } catch {
-      result = { text: "RECOVERY FAILED\nCONNECTION TO RECURSE LOST. TRY AGAIN." };
-    }
-    setBusy(false);
-    if (result.code) {
-      setLog((entries) => entries.map((e) => (e.id === id ? { ...e, r: "RECOVERY KEY ACCEPTED\nINITIALIZING RESTORATION..." } : e)));
-      setCode(result.code);
-      save({ roll, payload, code: result.code });
-      advance(5);
-      setView("restoring");
-    } else {
-      setLog((entries) => entries.map((e) => (e.id === id ? { ...e, r: result.text, warn: true } : e)));
-    }
-  };
-
-  const execute = (raw) => {
+  const execute = async (raw) => {
     const value = raw.trim();
     if (!value || busy) return;
     setInput("");
@@ -218,26 +152,22 @@ export default function GhostProcess() {
     }
 
     const id = Date.now() + Math.random();
-    const result = run(value, { roll, payload });
-    if (typeof result === "string") {
-      setLog((entries) => [...entries, { id, v: value, r: result, warn: /UNKNOWN|FAILED|not found/.test(result) }]);
-      return;
+    const shown = payload && value.endsWith(payload) && value !== payload ? value.replace(payload, "[payload]") : value;
+    setLog((entries) => [...entries, { id, v: shown, r: "…" }]);
+    setBusy(true);
+    let result;
+    try {
+      result = await post("/api/ghost/command", { roll, input: value });
+    } catch (error) {
+      result = { output: `CONNECTION ERROR\n${offline(error)}`, warn: true };
     }
-    if (result.action === "trace") {
-      advance(2);
-      setLog((entries) => [...entries, { id, v: value, r: result.text }]);
-    } else if (result.action === "os") {
-      advance(3);
-      setLog((entries) => [...entries, { id, v: value, r: "USER ENVIRONMENT ACCESS GRANTED" }]);
-      setView("os");
-    } else if (result.action === "decode") {
-      advance(4);
-      setLog((entries) => [...entries, { id, v: "decode [payload]", r: "DECRYPTING ARCHIVE..." }]);
-      setModal(true);
-    } else if (result.action === "restore") {
-      setLog((entries) => [...entries, { id, v: value, r: "VERIFYING RESTORATION KEY..." }]);
-      restore(result.key, id);
-    }
+    setBusy(false);
+    setLog((entries) => entries.map((e) => (e.id === id ? { ...e, r: result.output, warn: result.warn } : e)));
+    advance(result.stage);
+    if (result.environment) setEnv(result.environment);
+    if (result.key) setKey(result.key);
+    if (result.code) setCode(result.code);
+    if (result.view) setView(result.view);
   };
 
   const change = (value) => {
@@ -390,7 +320,7 @@ export default function GhostProcess() {
             </div>
             <div className={s.chips} aria-label="Quick commands">
               {quickCommands.map((c) => (
-                <button key={c} type="button" onClick={() => execute(c)}>{c}</button>
+                <button key={c} type="button" onClick={() => execute(c)} disabled={busy}>{c}</button>
               ))}
             </div>
             <form
@@ -431,7 +361,7 @@ export default function GhostProcess() {
             <p className={s.tip}>↑ ↓ history · Tab completes · type <code>help</code> to begin</p>
           </aside>
 
-          {modal && (
+          {key && (
             <div className={s.modal} role="dialog" aria-modal="true" aria-labelledby="decoded">
               <section>
                 <p className={s.cardLabel}><span>✓</span> Decode successful</p>
@@ -441,8 +371,8 @@ export default function GhostProcess() {
                   className={s.solid}
                   onClick={() => {
                     navigator.clipboard?.writeText(key).catch(() => {});
-                    setModal(false);
                     setInput(`restore ${key}`);
+                    setKey("");
                   }}
                 >
                   COPY KEY &amp; CONTINUE <span>→</span>
@@ -453,7 +383,7 @@ export default function GhostProcess() {
         </section>
       )}
 
-      {view === "os" && (
+      {view === "os" && env && (
         <section className={s.osWrap}>
           <div className={`${s.window} ${s.os}`}>
             <div className={s.chrome}>
@@ -463,7 +393,7 @@ export default function GhostProcess() {
             </div>
             <div className={s.osBody}>
               <nav className={s.folders} aria-label="Folders">
-                {Object.keys(folders).map((name) => (
+                {Object.keys(env.folders).map((name) => (
                   <button
                     key={name}
                     className={folder === name ? s.active : undefined}
@@ -482,8 +412,8 @@ export default function GhostProcess() {
                   <article className={s.viewer}>
                     <button className={s.back} onClick={() => setFile(null)}>← BACK</button>
                     <h2>{file}</h2>
-                    <pre>{fileContents(file, payload)}</pre>
-                    {file === "recovery_payload.txt" && (
+                    <pre>{env.contents[file]}</pre>
+                    {file === env.payloadFile && (
                       <div className={s.viewerActions}>
                         <button className={s.outline} onClick={() => copy(payload, "payload")}>
                           {copied === "payload" ? "PAYLOAD COPIED" : "COPY ENCRYPTED PAYLOAD"}
@@ -503,7 +433,7 @@ export default function GhostProcess() {
                   </article>
                 ) : (
                   <div className={s.fileGrid}>
-                    {folders[folder].map((name) => (
+                    {env.folders[folder].map((name) => (
                       <button key={name} className={s.file} onClick={() => setFile(name)}>
                         <span aria-hidden="true">{name.endsWith(".log") ? "≣" : "▤"}</span>
                         {name}

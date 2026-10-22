@@ -9,7 +9,9 @@
     "preview:workers": "npm run build && wrangler dev --config wrangler.jsonc",
     "preview:pages": "npm run build && wrangler pages dev out",
     "deploy:workers": "npm run build && wrangler deploy --config wrangler.jsonc",
-    "deploy:pages": "npm run build && wrangler pages deploy out --project-name recurse-website"
+    "deploy:pages": "npm run build && wrangler pages deploy out --project-name recurse-website",
+    "dev:api": "wrangler dev --port 8787",
+    "ghost:export": "node scripts/ghost-export.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

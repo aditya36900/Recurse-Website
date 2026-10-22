@@ -1,46 +1,30 @@
-// Prints every Ghost Process player as CSV, first solvers first.
-// Usage: node --env-file=.env.local scripts/ghost-export.mjs > ghost-players.csv
+// Prints every Ghost Process player as CSV, solvers first in solve order.
+// Usage: npm run ghost:export > ghost-players.csv           (live D1 database)
+//        npm run ghost:export -- --local > ghost-players.csv (local `wrangler dev` database)
+import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
+import path from "node:path";
 
-const url = (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL)?.trim();
-const token = (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN)?.trim();
-if (!url || !token) {
-  console.error("Set KV_REST_API_URL and KV_REST_API_TOKEN (e.g. via `vercel env pull .env.local`).");
-  process.exit(1);
+// Run Wrangler's own entry with Node (no shell), so the SQL reaches it as one argument on every OS.
+const wranglerPackage = createRequire(import.meta.url).resolve("wrangler/package.json");
+const wrangler = path.join(path.dirname(wranglerPackage), "bin", "wrangler.js");
+
+const where = process.argv.includes("--local") ? "--local" : "--remote";
+const sql =
+  "SELECT roll, key, code, stage, started_at, solved_at, failed_attempts FROM ghost_players " +
+  "ORDER BY solved_at IS NULL, solved_at, roll";
+
+const output = execFileSync(
+  process.execPath,
+  [wrangler, "d1", "execute", "recurse-ghost", where, "--json", "--command", sql],
+  { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] },
+);
+const rows = JSON.parse(output)[0].results;
+
+console.log("solver,roll,key,code,stage,startedAt,solvedAt,failedAttempts");
+let solver = 0;
+for (const r of rows) {
+  const rank = r.solved_at ? ++solver : "";
+  console.log([rank, r.roll, r.key, r.code, r.stage, r.started_at, r.solved_at ?? "", r.failed_attempts].join(","));
 }
-
-async function redis(command) {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(command),
-  });
-  if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
-  return (await response.json()).result;
-}
-
-const keys = [];
-let cursor = "0";
-do {
-  const [next, batch] = await redis(["SCAN", cursor, "MATCH", "ghost:player:*", "COUNT", 500]);
-  keys.push(...batch);
-  cursor = next;
-} while (cursor !== "0");
-
-const solved = await redis(["ZRANGE", "ghost:solved", 0, -1]);
-const rank = new Map(solved.map((roll, i) => [roll, i + 1]));
-
-const players = [];
-for (const key of keys) {
-  const fields = await redis(["HGETALL", key]);
-  const player = {};
-  for (let i = 0; i < fields.length; i += 2) player[fields[i]] = fields[i + 1];
-  players.push(player);
-}
-players.sort((a, b) => (rank.get(a.roll) ?? Infinity) - (rank.get(b.roll) ?? Infinity) || a.roll.localeCompare(b.roll));
-
-const columns = ["solver", "roll", "key", "code", "startedAt", "solvedAt", "failedAttempts"];
-console.log(columns.join(","));
-for (const p of players) {
-  console.log([rank.get(p.roll) ?? "", p.roll, p.key, p.code, p.startedAt, p.solvedAt ?? "", p.failedAttempts ?? 0].join(","));
-}
-console.error(`${players.length} players, ${solved.length} solved.`);
+console.error(`${rows.length} players, ${solver} solved.`);

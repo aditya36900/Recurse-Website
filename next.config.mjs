@@ -1,14 +1,13 @@
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
 
-// Vercel (and `next dev`) run a server, so the Ghost Process API routes
-// (`route.server.js`) are included. Other builds stay a static export for Cloudflare.
+// Production is a static export served by Cloudflare. In `next dev`, API calls are proxied to
+// the Ghost Process Worker running locally (`npm run dev:api`).
 export default function nextConfig(phase) {
-  const withServer = Boolean(process.env.VERCEL) || phase === PHASE_DEVELOPMENT_SERVER;
-
   /** @type {import('next').NextConfig} */
   return {
-    ...(withServer ? {} : { output: "export" }),
-    pageExtensions: withServer ? ["jsx", "js", "server.js"] : ["jsx", "js"],
+    ...(phase === PHASE_DEVELOPMENT_SERVER
+      ? { rewrites: async () => [{ source: "/api/:path*", destination: "http://127.0.0.1:8787/api/:path*" }] }
+      : { output: "export" }),
     // Static hosts do not provide the Next.js image optimization server.
     images: { unoptimized: true },
   };

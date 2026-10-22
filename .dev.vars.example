@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `wrangler dev` (gitignored). In production, set these as Worker secrets.
+GHOST_SECRET=
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
