@@ -11,13 +11,12 @@
     // Only API requests reach the Worker; pages and files are served straight from out/.
     "run_worker_first": ["/api/*"]
   },
-  // Ghost Process players and progress. Create with `npx wrangler d1 create recurse-ghost`
-  // and paste the printed database_id here.
+  // Ghost Process players and progress (D1 database "recurse-ghost").
   "d1_databases": [
     {
       "binding": "GHOST_DB",
       "database_name": "recurse-ghost",
-      "database_id": "00000000-0000-0000-0000-000000000000"
+      "database_id": "e6afc328-e443-424b-8e7d-369dec0d5485"
     }
   ]
 }
