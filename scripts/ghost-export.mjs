@@ -11,7 +11,7 @@ if (!url || !token) {
 async function redis(command) {
   const response = await fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify(command),
   });
   if (!response.ok) throw new Error(`${response.status} ${await response.text()}`);
